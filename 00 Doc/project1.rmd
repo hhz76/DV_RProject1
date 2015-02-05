@@ -1,0 +1,79 @@
+
+---
+title: "Project1"
+output: html_document
+---
+By: Brian Huang, Zachary Fine, Henry Zhao
+For our project one, we first queried the database for each of the 4 tables, Customers, Items, Orders, and Order_Details. The dataframes for each tables are shown below:
+```{r, echo=FALSE}
+library("bitops", lib.loc="~/R/win-library/3.1")
+library("gplots", lib.loc="~/R/win-library/3.1")
+library("ggplot2", lib.loc="~/R/win-library/3.1")
+library("grid", lib.loc="~/R/win-library/3.1")
+library("plyr", lib.loc="~/R/win-library/3.1")
+library("RCurl", lib.loc="~/R/win-library/3.1")
+library("reshape2", lib.loc="~/R/win-library/3.1")
+library("knitr", lib.loc="~/R/win-library/3.1")
+df <- data.frame(eval(parse(text=substring(getURL(URLencode('http://129.152.144.84:5001/rest/native/?query="select * FROM items"'), httpheader=c(DB='jdbc:oracle:thin:@129.152.144.84:1521/PDB1.usuniversi01134.oraclecloud.internal', USER='DV_ORDERS', PASS='orcl', MODE='native_mode', MODEL='model', returnFor = 'R', returnDimensions = 'False'), verbose = TRUE), 1, 2^31-1))))
+df2 <- data.frame(eval(parse(text=substring(getURL(URLencode('http://129.152.144.84:5001/rest/native/?query="select * FROM customers"'), httpheader=c(DB='jdbc:oracle:thin:@129.152.144.84:1521/PDB1.usuniversi01134.oraclecloud.internal', USER='DV_ORDERS', PASS='orcl', MODE='native_mode', MODEL='model', returnFor = 'R', returnDimensions = 'False'), verbose = TRUE), 1, 2^31-1))))
+df3 <- data.frame(eval(parse(text=substring(getURL(URLencode('http://129.152.144.84:5001/rest/native/?query="select * FROM orders"'), httpheader=c(DB='jdbc:oracle:thin:@129.152.144.84:1521/PDB1.usuniversi01134.oraclecloud.internal', USER='DV_ORDERS', PASS='orcl', MODE='native_mode', MODEL='model', returnFor = 'R', returnDimensions = 'False'), verbose = TRUE), 1, 2^31-1))))
+df4 <- data.frame(eval(parse(text=substring(getURL(URLencode('http://129.152.144.84:5001/rest/native/?query="select * FROM order_details"'), httpheader=c(DB='jdbc:oracle:thin:@129.152.144.84:1521/PDB1.usuniversi01134.oraclecloud.internal', USER='DV_ORDERS', PASS='orcl', MODE='native_mode', MODEL='model', returnFor = 'R', returnDimensions = 'False'), verbose = TRUE), 1, 2^31-1))))
+```
+#Data Frames
+##Items:
+```{r, echo=FALSE}
+head(df)
+```
+##Customers:
+```{r,echo=FALSE}
+head(df2)
+```
+##Orders:
+```{r,echo=FALSE}
+head(df3)
+```
+##Order Details:
+```{r,echo=FALSE}
+head(df4)
+```
+#Data Frame Plots:
+##Items:
+```{r, echo=FALSE}
+ggplot(df, aes(x=ARTIST, y=UNIT_PRICE)) + geom_point(aes(size=UNIT_PRICE))
+```
+<br><br>
+Here, in a graph produced from the "Items" table, we learn that all items are between $13 to $17 with most items being around $17.
+<br><br>
+##Customers (# Customers Per State):
+```{r, echo=FALSE}
+ggplot(df2, aes(x=CUSTOMER_STATE)) + geom_bar()
+```
+<br><br>
+In this graph of the "Customers"" table we see that a majority of our customers are California.
+<br><br>
+##Orders
+```{r, echo=FALSE}
+ggplot(df3, aes(x=ORDER_ID, y=CUSTOMER_ID)) + geom_violin()
+```
+<br><br>
+This is a violin graph of order ID vs customer ID. Due to a small number of data points we don't get much of a visual here, but we can see there is no relation between the two types of ID.
+<br><br>
+##Order Details
+```{r, echo=FALSE}
+ggplot(df4, aes(x=ITEM_ID)) + geom_bar()
+```
+<br><br>
+This table of order details shows us which items sold the most and least.
+<br><br>
+#Final Plots
+```{r, echo=FALSE}
+df <- data.frame(eval(parse(text=substring(getURL(URLencode('http://129.152.144.84:5001/rest/native/?query="select * from orders o join customers c on o.customer_id = c.customer_id join order_details d on o.order_id = d.order_id join items i on d.item_id = i.item_id"'), httpheader=c(DB='jdbc:oracle:thin:@129.152.144.84:1521/PDB1.usuniversi01134.oraclecloud.internal', USER='DV_ORDERS', PASS='orcl', MODE='native_mode', MODEL='model', returnFor = 'R', returnDimensions = 'False'), verbose = TRUE), 1, 2^31-1))))
+p <- ggplot(df, aes(x=ORDER_DATE, y=SHIPPED_DATE, color=as.factor(UNIT_PRICE))) + geom_point()
+p + facet_wrap(~CUSTOMER_STATE)
+p <- ggplot(df, aes(x=ORDER_DATE, y=SHIPPED_DATE, color=as.factor(TITLE))) + geom_point()
+p + facet_wrap(~CUSTOMER_STATE)
+p <- ggplot(df, aes(x=ORDER_DATE, y=SHIPPED_DATE, color=as.factor(ARTIST))) + geom_point()
+p + facet_wrap(~CUSTOMER_STATE)
+```
+<br><br>
+In these plots we can see a strong linear relationship between order date and ship date. Any point that deviates from the linear pattern (too high in the y axis) shows us an anomaly in the time it takes to ship the product. Any order above the line should be investigated for the cause of delayed shipping so the problem can be fixed and customers can remain happy.
